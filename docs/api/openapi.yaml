@@ -1,0 +1,578 @@
+openapi: 3.0.0
+info:
+  title: 'Laravel API'
+  description: 'Laravel APIの概要'
+  version: 1.0.0
+servers:
+  - url: http://localhost/api
+paths:
+  '/user':
+    get:
+      tags:
+        - User
+      summary: ユーザー情報を取得する
+      description: '現在のユーザーの情報を取得 (GET)'
+      operationId: getUser
+      security:
+        - BearerAuth: []  # Authorizationヘッダーでトークンを送信する
+      responses:
+        '200':
+          description: ユーザー情報が正常に取得されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthenticated.
+
+    put:
+      tags:
+        - User
+      summary: ユーザー情報を更新する
+      description: '現在のユーザーの情報を更新 (PUT)'
+      operationId: updateUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - name
+                - password
+                - password_confirmation
+              properties:
+                name:
+                  type: string
+                  description: 更新後のユーザー名
+                  example: New Name
+                password:
+                  type: string
+                  description: 更新後のパスワード
+                  example: password123
+                password_confirmation:
+                  type: string
+                  description: パスワード確認用
+                  example: password123
+      responses:
+        '200':
+          description: ユーザー情報が正常に更新されました
+        '400':
+          description: バリデーションエラー
+        '401':
+          description: 認証されていません。
+    delete:
+      tags:
+        - User
+      summary: ユーザーを削除する
+      description: '現在のユーザーを削除 (DELETE)'
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ユーザーが正常に削除されました
+        '401':
+          description: 認証されていません。
+  '/register/step1':
+    post:
+      tags:
+        - User
+      summary: ユーザー仮登録
+      description: 'ユーザー登録の仮登録ステップ (POST)'
+      operationId: registerStep1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  description: 登録するメールアドレス
+                  example: johndoe@example.com
+              type: object
+      responses:
+        '200':
+          description: 仮登録が完了しました。メールをご確認ください。
+        '400':
+          description: 無効なメールアドレスまたは既に登録済み
+  '/register/step2':
+    post:
+      tags:
+        - User
+      summary: ユーザー本登録
+      description: 'ユーザー登録の本登録ステップ (POST)'
+      operationId: registerStep2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - token
+                - name
+                - password
+              properties:
+                token:
+                  type: string
+                  description: 仮登録時に送信されたトークン
+                  example: abcdef123456
+                name:
+                  type: string
+                  description: ユーザー名
+                  example: John Doe
+                password:
+                  type: string
+                  description: パスワード
+                  example: password123
+              type: object
+      responses:
+        '201':
+          description: 本登録が完了しました。
+        '400':
+          description: 入力が無効です。
+        '401':
+          description: トークンが無効です。
+  '/login':
+    post:
+      tags:
+        - User
+      summary: ユーザーログイン
+      description: '既存のユーザーがログイン (POST)'
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  description: メールアドレス
+                  example: johndoe@example.com
+                password:
+                  type: string
+                  description: パスワード
+                  example: password123
+              type: object
+      responses:
+        '200':
+          description: ログインが成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: 認証トークン
+                    example: 1|XyZ1234ExampleToken
+                  token:
+                    type: string
+                    description: ユーザー名
+                    example: Name
+        '400':
+          description: 入力が無効です。
+        '401':
+          description: パスワードが違います。
+  '/logout':
+    post:
+      tags:
+        - User
+      summary: ユーザーをログアウトする
+      description: '現在のユーザーをログアウトします'
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ログアウトが成功しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: ログアウトが成功しました
+        '401':
+          description: 認証されていません
+
+  '/articles':
+    get:
+      tags:
+        - Articles
+      summary: 記事一覧を取得する
+      description: 'すべての記事を取得 (GET)'
+      operationId: getArticles
+      responses:
+        '200':
+          description: 記事一覧が正常に取得されました
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Article'
+    post:
+      tags:
+        - Articles
+      summary: 記事を作成する
+      description: '新しい記事を作成 (POST)'
+      operationId: createArticle
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - title
+                - content
+              properties:
+                title:
+                  type: string
+                  description: 記事タイトル
+                  example: Sample Title
+                content:
+                  type: string
+                  description: 記事内容
+                  example: This is a sample article.
+              type: object
+      responses:
+        '201':
+          description: 記事が正常に作成されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+        '401':
+          description: 認証されていません
+
+  '/articles/{article_id}':
+    get:
+      tags:
+        - Articles
+      summary: 記事を取得する
+      description: '特定の記事を取得 (GET)'
+      operationId: getArticle
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 記事が正常に取得されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Article'
+    put:
+      tags:
+        - Articles
+      summary: 記事を更新する
+      description: '特定の記事を更新 (PUT)'
+      operationId: updateArticle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - title
+                - content
+              properties:
+                title:
+                  type: string
+                  description: 更新後のタイトル
+                  example: Updated Title
+                content:
+                  type: string
+                  description: 更新後の内容
+                  example: Updated content.
+              type: object
+      responses:
+        '200':
+          description: 記事が正常に更新されました
+        '403':
+          description: 権限がありません
+    delete:
+      tags:
+        - Articles
+      summary: 記事を削除する
+      description: '特定の記事を削除 (DELETE)'
+      operationId: deleteArticle
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: article_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 記事が正常に削除されました
+        '403':
+          description: 権限がありません
+
+  '/articles/{article_id}/comments':
+    get:
+      tags:
+        - Comments
+      summary: コメント一覧を取得する
+      description: 'コメント一覧取得 (GET)'
+      operationId: a000695a7da3a1dac161eb743a95fe73
+      parameters:
+        -
+          name: article_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: コメント一覧が正常に取得されました
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+        '404':
+          description: 記事が見つかりません
+    post:
+      tags:
+        - Comments
+      summary: コメントを投稿する
+      description: 'コメント投稿 (POST)'
+      operationId: b13d9f63e09bb84721285d15a89a64c4
+      security:
+        - BearerAuth: []
+      parameters:
+        -
+          name: article_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - content
+              properties:
+                content:
+                  description: コメント内容
+                  type: string
+                  example: これはコメントです。
+              type: object
+      responses:
+        '201':
+          description: コメントが正常に投稿されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: コメントが投稿されました。
+                  comment:
+                    $ref: '#/components/schemas/Comment'
+        '400':
+          description: 入力が無効です
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 入力が無効です。
+        '401':
+          description: ログインが必要です。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: ログインが必要です。
+  '/comments/{comment_id}':
+    put:
+      tags:
+        - Comments
+      summary: コメントを更新する
+      description: 'コメント更新 (UPDATE)'
+      operationId: d0e5531b9fe51f4a40a6d703ff1a9ea7
+      security:
+        - BearerAuth: []
+      parameters:
+        -
+          name: comment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - content
+              properties:
+                content:
+                  description: コメント内容
+                  type: string
+                  example: 更新されたコメントです。
+              type: object
+      responses:
+        '200':
+          description: コメントが正常に更新されました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+        '403':
+          description: 権限がありません
+        '404':
+          description: 入力が無効です
+    delete:
+      tags:
+        - Comments
+      summary: コメントを削除する
+      description: 'コメント削除 (DELETE)'
+      operationId: 0b93162c78bb45153f4e6611415ce296
+      security:
+        - BearerAuth: []
+      parameters:
+        -
+          name: comment_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: コメントが正常に削除されました
+        '403':
+          description: 権限がありません
+tags:
+  -
+    name: Comments
+    description: 'Comment operations'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ユーザーID
+          example: 
+        name:
+          type: string
+          description: ユーザー名
+          example: John Doe
+        email:
+          type: string
+          description: メールアドレス
+          example: johndoe@example.com
+        created_at:
+          type: string
+          format: date-time
+          example: '2024-12-01T00:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2024-12-02T00:00:00Z'
+    Article:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 記事ID
+          example: 1
+        title:
+          type: string
+          description: 記事タイトル
+          example: 記事のタイトル
+        content:
+          type: string
+          description: 記事内容
+          example: 記事の内容です。
+        user_id:
+          type: integer
+          description: 作成者のユーザーID
+          example: '2024-12-01T00:00:00Z'
+        created_at:
+          type: string
+          format: date-time
+          descreption: 作成日時
+          example: '2024-12-02T00:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          descreption: 更新日時
+          example:
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: コメントID
+          example: 1
+        content:
+          type: string
+          description: コメント内容
+          example: このコメントはサンプルです。
+        user_id:
+          type: integier
+          description: コメントを投稿したユーザーのID
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: '2024-12-01T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: '2024-12-02T10:00:00Z'
