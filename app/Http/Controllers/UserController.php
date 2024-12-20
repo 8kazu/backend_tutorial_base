@@ -71,7 +71,7 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function registerStep1(Request $request)
+    public function preregister(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|unique:users,email',
@@ -131,7 +131,7 @@ class UserController extends Controller
      *     )
      * )
      */
-    public function registerStep2(Request $request)
+    public function verify(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'token' => 'required',

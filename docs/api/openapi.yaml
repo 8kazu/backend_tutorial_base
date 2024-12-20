@@ -83,13 +83,13 @@ paths:
           description: ユーザーが正常に削除されました
         '401':
           description: 認証されていません。
-  '/register/step1':
+  '/register/preregister':
     post:
       tags:
         - User
       summary: ユーザー仮登録
       description: 'ユーザー登録の仮登録ステップ (POST)'
-      operationId: registerStep1
+      operationId: preregister
       requestBody:
         required: true
         content:
@@ -108,13 +108,13 @@ paths:
           description: 仮登録が完了しました。メールをご確認ください。
         '400':
           description: 無効なメールアドレスまたは既に登録済み
-  '/register/step2':
+  '/register/verify':
     post:
       tags:
         - User
       summary: ユーザー本登録
       description: 'ユーザー登録の本登録ステップ (POST)'
-      operationId: registerStep2
+      operationId: verify
       requestBody:
         required: true
         content:
