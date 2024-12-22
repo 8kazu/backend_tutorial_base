@@ -66,10 +66,57 @@ paths:
       responses:
         '200':
           description: ユーザー情報が正常に更新されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: ユーザー情報が正常に更新されました
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 299
+                          name:
+                            type: string
+                            example: testuser
+                          email:
+                            type: string
+                            example: kazu@example.com
+                          created_at:
+                            type: string
+                            format: date-time
+                            example: '2024-12-22T19:16:41.000000Z'
+                          updated_at:
+                            type: string
+                            format: date-time
+                            example: '2024-12-22T19:30:21.000000Z'
         '400':
           description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 入力が無効です。
         '401':
           description: 認証されていません。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 認証されていません。
     delete:
       tags:
         - User
@@ -124,6 +171,7 @@ paths:
                 - token
                 - name
                 - password
+                - password_confirmation
               properties:
                 token:
                   type: string
@@ -137,14 +185,75 @@ paths:
                   type: string
                   description: パスワード
                   example: password123
+                password_confirmation:
+                  type: string
+                  description: 確認用パスワード (passwordと一致する必要があります)
+                  example: password123
               type: object
       responses:
         '201':
           description: 本登録が完了しました。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: 本登録が完了しました。
+                      user:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: John Doe
+                          email:
+                            type: string
+                            example: johndoe@example.com
+                          created_at:
+                            type: string
+                            format: date-time
+                            example: '2024-12-22T19:16:41.000000Z'
+                          updated_at:
+                            type: string
+                            format: date-time
+                            example: '2024-12-22T19:16:41.000000Z'
         '400':
           description: 入力が無効です。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: 入力が無効です。
         '401':
           description: トークンが無効です。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: トークンが無効です。
+        '409':
+          description: メールアドレスが既に登録されています。
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: メールアドレスが既に登録されています。
   '/login':
     post:
       tags:
@@ -182,7 +291,7 @@ paths:
                     type: string
                     description: 認証トークン
                     example: 1|XyZ1234ExampleToken
-                  token:
+                  username:
                     type: string
                     description: ユーザー名
                     example: Name
@@ -265,7 +374,7 @@ paths:
         '401':
           description: 認証されていません
 
-  '/articles/{article_id}':
+  '/articles/{article}':
     get:
       tags:
         - Articles
@@ -273,7 +382,7 @@ paths:
       description: '特定の記事を取得 (GET)'
       operationId: getArticle
       parameters:
-        - name: article_id
+        - name: article
           in: path
           required: true
           schema:
@@ -294,7 +403,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: article_id
+        - name: article
           in: path
           required: true
           schema:
@@ -331,7 +440,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - name: article_id
+        - name: article
           in: path
           required: true
           schema:
@@ -342,7 +451,7 @@ paths:
         '403':
           description: 権限がありません
 
-  '/articles/{article_id}/comments':
+  '/articles/{article}/comments':
     get:
       tags:
         - Comments
@@ -351,7 +460,7 @@ paths:
       operationId: a000695a7da3a1dac161eb743a95fe73
       parameters:
         -
-          name: article_id
+          name: article
           in: path
           required: true
           schema:
@@ -377,7 +486,7 @@ paths:
         - BearerAuth: []
       parameters:
         -
-          name: article_id
+          name: article
           in: path
           required: true
           schema:
@@ -428,7 +537,7 @@ paths:
                   message:
                     type: string
                     example: ログインが必要です。
-  '/comments/{comment_id}':
+  '/comments/{comment}':
     put:
       tags:
         - Comments
@@ -439,7 +548,7 @@ paths:
         - BearerAuth: []
       parameters:
         -
-          name: comment_id
+          name: comment
           in: path
           required: true
           schema:
@@ -478,7 +587,7 @@ paths:
         - BearerAuth: []
       parameters:
         -
-          name: comment_id
+          name: comment
           in: path
           required: true
           schema:
