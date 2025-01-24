@@ -1,63 +1,45 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Http\Requests\CommentStoreRequest;
+use App\Http\Requests\CommentUpdateRequest;
+use App\Http\Resources\CommentResource;
+use App\Services\CommentService;
 use App\Models\Comment;
 use App\Models\Article;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 class CommentController extends Controller
 {
+    protected $commentService;
+
+    public function __construct(CommentService $commentService)
+    {
+        $this->commentService = $commentService;
+    }
+
     public function index(Article $article)
     {
-        // 直近のコメントから順に取得
-        $comments = $article->comments()->latest()->get();
-
-        return response()->json([
-            'message' => 'コメント一覧が正常に取得されました',
-            'comments' => $comments, 
-        ], 200);
-    }
-    
-    public function store(Request $request, Article $article)
-    {
-        $request->validate([
-            'content' => 'required|min:10|max:100',
-        ]);
-
-        $comment = $article->comments()->create([
-            'content' => $request->content,
-            'user_id' => Auth::id(),
-        ]);
-
-        return response()->json(['message' => 'コメントが投稿されました。', 'comment' => $comment], 201);
+        $comments = $this->commentService->getCommentsByArticle($article);
+        return response()->json(CommentResource::collection($comments), 200);
     }
 
-    public function update(Request $request, Comment $comment)
+    public function store(CommentStoreRequest $request, Article $article)
     {
-        if ($comment->user_id !== Auth::id()) {
-            return response()->json(['message' => '権限がありません。'], 403);
-        }
+        $comment = $this->commentService->createComment($article, $request->validated());
+        return response()->json(new CommentResource($comment), 201);
+    }
 
-        $request->validate([
-            'content' => 'required|min:10|max:100',
-        ]);
-
-        $comment->update(['content' => $request->content]);
-
-        return response()->json(['message' => 'コメントが正常に更新されました。', 'comment' => $comment], 200);
+    public function update(CommentUpdateRequest $request, Comment $comment)
+    {
+        $updatedComment = $this->commentService->updateComment($comment, $request->validated());
+        return response()->json(new CommentResource($updatedComment), 200);
     }
 
     public function destroy(Comment $comment)
     {
-        if ($comment->user_id !== Auth::id()) {
-            return response()->json(['message' => '権限がありません。'], 403);
-        }
-
-        $comment->delete();
-
+        $this->commentService->deleteComment($comment);
         return response()->json(['message' => 'コメントが正常に削除されました'], 204);
     }
 }

@@ -2,62 +2,53 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ArticleStoreRequest;
+use App\Http\Requests\ArticleUpdateRequest;
+use App\Http\Resources\ArticleResource;
+use App\Services\ArticleService;
 use App\Models\Article;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ArticleController extends Controller
 {
+    protected $articleService;
+
+    public function __construct(ArticleService $articleService)
+    {
+        $this->articleService = $articleService;
+    }
+
+    // 記事一覧取得
     public function index()
     {
-        $articles = Article::orderBy('created_at', 'desc')->get();
-        return response()->json(['data' => $articles], 200);
+        $articles = $this->articleService->getAllArticles();
+        return response()->json(ArticleResource::collection($articles), 200);
     }
 
+    // 特定記事取得
     public function show(Article $article)
     {
-        return response()->json(['data' => $article], 200);
+        return response()->json(new ArticleResource($article), 200);
     }
 
-    public function store(Request $request)
+    // 新規記事作成
+    public function store(ArticleStoreRequest $request)
     {
-        // バリデーションと記事作成を一度に実行
-        $article = Article::create(
-            $request->validate([
-                'title' => 'required|max:255',
-                'content' => 'required',
-            ]) + ['user_id' => Auth::id()] // ユーザーIDを追加
-        );
-
-        return response()->json(['data' => $article], 201);
+        $article = $this->articleService->createArticle($request->validated(), Auth::id());
+        return response()->json(new ArticleResource($article), 201);
     }
 
-    public function update(Request $request, Article $article)
+    // 記事更新
+    public function update(ArticleUpdateRequest $request, Article $article)
     {
-        $request->validate([
-            'title' => 'required|max:255',
-            'content' => 'required',
-        ]);
-
-        // 記事の作成者のみ更新可能
-        if ($article->user_id !== Auth::id()) {
-            return response()->json(['error' => '権限がありません'], 403);
-        }
-
-        $article->update($request->only(['title', 'content']));
-
-        return response()->json(['message' => '記事が正常に更新されました', 'data' => $article], 200);
+        $updatedArticle = $this->articleService->updateArticle($article, $request->validated(), Auth::id());
+        return response()->json(new ArticleResource($updatedArticle), 200);
     }
 
+    // 記事削除
     public function destroy(Article $article)
     {
-        // 記事の作成者のみ削除可能
-        if ($article->user_id !== Auth::id()) {
-            return response()->json(['error' => '権限がありません'], 403);
-        }
-
-        $article->delete();
-
+        $this->articleService->deleteArticle($article, Auth::id());
         return response()->json(['message' => '記事が正常に削除されました'], 204);
     }
 }
